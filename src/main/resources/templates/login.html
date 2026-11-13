@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - Mu 的小基地</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        /* 百分比布局：登录卡片水平居中，宽度按百分比 */
+        .login-wrap {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card { width: 40%; min-width: 320px; max-width: 460px; }
+        .login-title {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #333;
+        }
+        .login-title .sprite { vertical-align: middle; margin-right: 8px; }
+        .login-foot { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+        .login-foot a { color: #667eea; margin-left: 6px; }
+        .form-row { display: flex; gap: 10px; align-items: center; }
+        .form-row .sprite { flex-shrink: 0; }
+        .form-row input { flex: 1; }
+        .btn-full { width: 100%; }
+        /* 锁定倒计时期间的禁用按钮 */
+        #loginBtn:disabled {
+            background: #c0c4cc;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        /* 验证码 */
+        #captchaRow { display: none; }
+        #captchaRow .form-row { align-items: center; }
+        #captchaRow input { flex: 1; }
+        #captchaImg {
+            width: 130px; height: 44px; border: 1px solid #e4e7eb; border-radius: 6px;
+            cursor: pointer; flex-shrink: 0; background: #fafafa; object-fit: cover;
+        }
+        @media (max-width: 600px) { .login-card { width: 92%; } }
+    </style>
+</head>
+<body>
+    <div class="bg-animate"></div>
+    <div class="login-wrap">
+        <div class="login-card form-card">
+            <h2 class="login-title"><span class="sprite sprite-lock"></span>用户登录</h2>
+
+            <div id="alert" class="alert"></div>
+
+            <form id="loginForm" onsubmit="return doLogin(event)">
+                <div class="form-item">
+                    <label>用户名</label>
+                    <div class="form-row">
+                        <span class="sprite sprite-sm sprite-user"></span>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" autocomplete="off" required>
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>密码</label>
+                    <div class="form-row">
+                        <span class="sprite sprite-sm sprite-lock"></span>
+                        <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
+                </div>
+                <div class="form-item" id="captchaRow">
+                    <label>验证码</label>
+                    <div class="form-row">
+                        <input type="text" id="captcha" name="captcha" placeholder="请输入验证码" autocomplete="off">
+                        <img id="captchaImg" alt="验证码" title="点击刷新" onclick="refreshCaptcha()">
+                    </div>
+                </div>
+                <button type="submit" id="loginBtn" class="btn btn-primary btn-full">登 录</button>
+            </form>
+
+            <div class="login-foot">
+                还没有账号？<a th:href="@{/auth/register}">立即注册</a>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:inline="none">
+        var captchaRequired = false;
+        var lockTimer = null;
+
+        function refreshCaptcha() {
+            var img = document.getElementById('captchaImg');
+            img.src = '/auth/captcha?t=' + Date.now();
+        }
+
+        function showCaptcha() {
+            captchaRequired = true;
+            document.getElementById('captchaRow').style.display = 'block';
+            refreshCaptcha();
+        }
+
+        // 锁定倒计时：禁用登录按钮，显示剩余秒数，倒计时结束后恢复
+        function startLockCountdown(seconds) {
+            var btn = document.getElementById('loginBtn');
+            if (lockTimer) { clearInterval(lockTimer); lockTimer = null; }
+            var remain = Math.max(1, Math.floor(seconds));
+
+            function tick() {
+                if (remain <= 0) {
+                    clearInterval(lockTimer);
+                    lockTimer = null;
+                    btn.disabled = false;
+                    btn.textContent = '登 录';
+                    return;
+                }
+                btn.disabled = true;
+                btn.textContent = '请稍后再试（' + remain + 's）';
+                remain--;
+            }
+            tick();
+            lockTimer = setInterval(tick, 1000);
+        }
+
+        function doLogin(e) {
+            e.preventDefault();
+            hideAlert('alert');
+            var username = document.getElementById('username').value.trim();
+            var password = document.getElementById('password').value;
+            if (!username || !password) { showAlert('alert', 'error', '请输入用户名和密码'); return false; }
+
+            var payload = { username: username, password: password };
+            if (captchaRequired) {
+                payload.captcha = document.getElementById('captcha').value.trim();
+            }
+
+            postJSON('/auth/login', payload, function (res) {
+                showAlert('alert', 'success', res.message);
+                redirectLater(res.redirect || '/home', 600);
+            }, function (res) {
+                // 2001 = 账号已锁定，显示剩余秒数并启动倒计时
+                if (res.code === 2001) {
+                    var remain = (res.data && res.data.lockRemainSeconds) || 0;
+                    startLockCountdown(remain);
+                }
+                // 2002 = 需要验证码（失败次数过多），显示验证码输入框
+                if (res.code === 2002) {
+                    showCaptcha();
+                    document.getElementById('captcha').value = '';
+                }
+                showAlert('alert', 'error', res.message);
+            });
+            return false;
+        }
+    </script>
+</body>
+</html>

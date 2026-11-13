@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>起始页 - Mu 的小基地</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        /* ============ 主题变量（默认亮色，data-theme="dark" 切暗色） ============ */
+        :root {
+            --bg: #f6f8fa;
+            --bg-soft: #eef1f4;
+            --panel: #ffffff;
+            --panel-hover: #f2f5f8;
+            --border: #d8dee4;
+            --text: #1f2328;
+            --text-dim: #57606a;
+            --text-faint: #8b949e;
+            --accent: #1f6feb;
+            --accent2: #2da44e;
+            --accent3: #bc4c00;
+            --accent4: #cf222e;
+            --accent-soft: rgba(31,111,235,.12);
+            --greeting-grad: linear-gradient(90deg, #1f6feb, #2da44e);
+            --card-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+        :root[data-theme="dark"] {
+            --bg: #0d1117;
+            --bg-soft: #161b22;
+            --panel: #1c2128;
+            --panel-hover: #232a33;
+            --border: #2d333b;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --text-faint: #6e7681;
+            --accent: #58a6ff;
+            --accent2: #7ee787;
+            --accent3: #f0883e;
+            --accent4: #f85149;
+            --accent-soft: rgba(88,166,255,.12);
+            --greeting-grad: linear-gradient(90deg, #58a6ff, #7ee787);
+            --card-shadow: 0 4px 12px rgba(0,0,0,.35);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* 外层受控栅格：max-width 1180px 居中 */
+        .page-shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 20px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ============ 顶部栏 ============ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar .logo-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--border);
+        }
+        .topbar .site-title { font-size: 18px; font-weight: 700; }
+        .topbar .spacer { flex: 1; }
+        .topbar .clock { font-size: 13px; color: var(--text-dim); text-align: right; line-height: 1.4; }
+        .topbar .clock .date { font-size: 11px; color: var(--text-faint); }
+        .topbar .user-chip {
+            font-size: 13px; color: var(--text-dim);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-ghost {
+            background: transparent; color: var(--text-dim);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 6px 14px; font-size: 13px; cursor: pointer; transition: all .2s;
+        }
+        .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+        /* ============ 欢迎区：问候 + 时钟 ============ */
+        .hero { text-align: center; padding: 8px 0 0; }
+        .hero .greeting {
+            font-size: 30px; font-weight: 700;
+            background: var(--greeting-grad);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero .sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+        /* ============ 搜索框（最高频操作，置顶突出） ============ */
+        .search-wrap { position: relative; }
+        .search-bar {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 8px 12px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .search-bar:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+        .engine-btn {
+            background: transparent; color: var(--text-dim); border: none;
+            font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer;
+            border-radius: 8px; white-space: nowrap; transition: all .15s;
+        }
+        .engine-btn:hover { color: var(--text); background: var(--panel-hover); }
+        .engine-btn.active { color: var(--accent); background: var(--accent-soft); }
+        .search-input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: var(--text); font-size: 16px; padding: 6px 4px;
+        }
+        .search-input::placeholder { color: var(--text-faint); }
+        /* 搜索历史下拉 */
+        .search-history {
+            position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px;
+            background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+            box-shadow: var(--card-shadow); z-index: 50; overflow: hidden; display: none;
+        }
+        .search-history.show { display: block; }
+        .search-history .h-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 14px; font-size: 12px; color: var(--text-faint); border-bottom: 1px solid var(--border);
+        }
+        .search-history .h-clear { cursor: pointer; color: var(--accent); }
+        .search-history .h-item {
+            padding: 9px 14px; font-size: 13px; color: var(--text-dim); cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: background .15s;
+        }
+        .search-history .h-item:hover { background: var(--panel-hover); color: var(--text); }
+        .search-history .h-item::before { content: '🕘'; font-size: 12px; opacity: .6; }
+        .search-hint {
+            font-size: 12px; color: var(--text-faint); margin-top: 8px;
+            text-align: center; letter-spacing: .3px;
+        }
+        .search-hint kbd {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: inherit;
+        }
+        .go-btn {
+            background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; padding: 8px 18px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity .2s;
+        }
+        .go-btn:hover { opacity: .85; }
+
+        /* ============ 主体双栏：内容 1fr + 右侧 300px ============ */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* ============ 图标分组（三组卡片） ============ */
+        .group { margin-bottom: 28px; }
+        .group-title {
+            font-size: 14px; font-weight: 600; color: var(--text-dim);
+            margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+        }
+        .group-title::before {
+            content: ''; width: 4px; height: 14px; border-radius: 2px;
+            background: var(--accent);
+        }
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+            gap: 12px;
+        }
+        .link-card {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 6px; cursor: pointer;
+            text-decoration: none; color: inherit; transition: all .22s;
+        }
+        .link-card:hover {
+            transform: translateY(-5px);
+            background: var(--panel-hover); border-color: var(--accent);
+            box-shadow: var(--card-shadow);
+        }
+        .link-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 17px; font-weight: 700; flex-shrink: 0;
+        }
+        .link-name { font-size: 12px; color: var(--text-dim); text-align: center; }
+
+        /* ============ 右侧栏：码农语录（打字机） ============ */
+        .sidebar-col { position: sticky; top: 20px; }
+        .slogan-card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px 18px; cursor: pointer;
+            transition: all .22s; min-height: 200px;
+            display: flex; flex-direction: column;
+            position: relative; overflow: hidden;
+        }
+        .slogan-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3));
+            opacity: .7;
+        }
+        .slogan-card:hover { border-color: var(--accent2); transform: translateY(-3px); box-shadow: var(--card-shadow); }
+        .slogan-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; color: var(--text-dim); font-size: 13px; font-weight: 600;
+        }
+        .slogan-title { display: flex; align-items: center; }
+        .slogan-title .dot { color: var(--accent2); margin-right: 4px; font-size: 16px; }
+        .slogan-count { font-size: 11px; color: var(--text-faint); font-weight: 400; }
+        .slogan-body {
+            flex: 1; font-size: 15px; line-height: 1.8; color: var(--text);
+            word-break: break-word;
+        }
+        .slogan-body .cursor {
+            display: inline-block; width: 2px; height: 1.1em; margin-left: 2px;
+            background: var(--accent2); vertical-align: -0.15em;
+            animation: blink 1s steps(1) infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        .slogan-footer {
+            margin-top: 14px; font-size: 11px; color: var(--text-faint);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .slogan-footer .source { color: var(--accent3); }
+        .slogan-actions { display: flex; gap: 6px; }
+        .slogan-actions .action {
+            color: var(--text-dim); cursor: pointer; padding: 2px 8px;
+            border-radius: 6px; border: 1px solid transparent; transition: all .15s;
+        }
+        .slogan-actions .action:hover { color: var(--accent2); border-color: var(--border); background: var(--panel-hover); }
+        .slogan-actions .action.copied { color: var(--accent2); }
+        .slogan-actions .action.liked { color: var(--accent4); }
+
+        /* ============ 响应式：900px 以下变单栏 ============ */
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .sidebar-col { position: static; }
+            .topbar { flex-wrap: wrap; }
+            .topbar .clock { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <!-- 顶部栏：头像 + 标题 + 时钟 + 用户 + 退出 -->
+        <div class="topbar">
+            <img class="logo-avatar" th:src="@{/img/avatar.jpg}" alt="头像">
+            <span class="site-title">Mu 的小基地</span>
+            <span class="spacer"></span>
+            <span class="clock">
+                <div id="clockTime">--:--:--</div>
+                <div class="date" id="clockDate"></div>
+            </span>
+            <button class="btn-ghost theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换主题">🌙 暗色</button>
+            <span class="user-chip">
+                <span>欢迎，<span th:text="${nickname}">用户</span></span>
+                <button class="btn-ghost" onclick="doLogout()">退出登录</button>
+            </span>
+        </div>
+
+        <!-- 欢迎问候 -->
+        <div class="hero">
+            <div class="greeting" id="greeting">你好</div>
+            <div class="sub" id="greetingSub">愿你的代码没有 Bug</div>
+        </div>
+
+        <!-- 搜索框（可切换引擎） -->
+        <div class="search-wrap">
+            <div class="search-bar">
+                <button class="engine-btn active" id="engineBtn" onclick="cycleEngine()">百度</button>
+                <input class="search-input" id="searchInput" type="text" placeholder="输入关键词，回车搜索" autocomplete="off">
+                <button class="go-btn" onclick="doSearch()">搜索</button>
+            </div>
+            <div class="search-history" id="searchHistory">
+                <div class="h-head">
+                    <span>搜索历史</span>
+                    <span class="h-clear" onclick="clearSearchHistory()">清空</span>
+                </div>
+                <div id="searchHistoryList"></div>
+            </div>
+            <div class="search-hint">
+                <kbd>Ctrl</kbd> + <kbd>K</kbd> 聚焦搜索　·　<kbd>Ctrl</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd> 切换引擎
+            </div>
+        </div>
+
+        <!-- 主体双栏 -->
+        <div class="main-grid">
+            <!-- 左：图标分组 -->
+            <div class="content-col">
+                <div class="group">
+                    <div class="group-title">影音社交</div>
+                    <div class="link-grid">
+                        <a class="link-card" href="https://www.bilibili.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#fb7299,#00a1d6);">B</div>
+                            <div class="link-name">哔哩哔哩</div>
+                        </a>
+                        <a class="link-card" href="https://www.douyin.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#000,#333);">抖</div>
+                            <div class="link-name">抖音</div>
+                        </a>
+                        <a class="link-card" href="https://weibo.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#e6162d,#a01010);">微</div>
+                            <div class="link-name">微博</div>
+                        </a>
+                        <a class="link-card" href="https://www.zhihu.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#0084ff,#0066cc);">知</div>
+                            <div class="link-name">知乎</div>
+                        </a>
+                        <a class="link-card" href="https://www.acfun.cn" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#fd4c5d,#c8102e);">A</div>
+                            <div class="link-name">A站</div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <div class="group-title">开发技术</div>
+                    <div class="link-grid">
+                        <a class="link-card" href="https://github.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#24292e,#000);">G</div>
+                            <div class="link-name">GitHub</div>
+                        </a>
+                        <a class="link-card" href="https://gitee.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#c71d23,#8a1013);">码</div>
+                            <div class="link-name">Gitee</div>
+                        </a>
+                        <a class="link-card" href="https://stackoverflow.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#f48024,#b06000);">SO</div>
+                            <div class="link-name">StackOverflow</div>
+                        </a>
+                        <a class="link-card" href="https://www.juejin.cn" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#1e80ff,#0050cc);">掘</div>
+                            <div class="link-name">掘金</div>
+                        </a>
+                        <a class="link-card" href="https://segmentfault.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#009a61,#006b43);">SF</div>
+                            <div class="link-name">思否</div>
+                        </a>
+                        <a class="link-card" href="https://leetcode.cn" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#ffa116,#cc7700);">力</div>
+                            <div class="link-name">LeetCode</div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <div class="group-title">常用工具</div>
+                    <div class="link-grid">
+                        <a class="link-card" href="https://www.baidu.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#3385ff,#0066cc);">百</div>
+                            <div class="link-name">百度</div>
+                        </a>
+                        <a class="link-card" href="https://www.taobao.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#ff4400,#cc2200);">淘</div>
+                            <div class="link-name">淘宝</div>
+                        </a>
+                        <a class="link-card" href="https://www.jd.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#e1251b,#a01010);">京</div>
+                            <div class="link-name">京东</div>
+                        </a>
+                        <a class="link-card" href="https://mail.qq.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#12b7f5,#0a6e9e);">邮</div>
+                            <div class="link-name">邮箱</div>
+                        </a>
+                        <a class="link-card" href="https://translate.google.cn" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#4285f4,#1a56c0);">译</div>
+                            <div class="link-name">翻译</div>
+                        </a>
+                        <a class="link-card" href="https://www.2345.com" target="_blank">
+                            <div class="link-icon" style="background:linear-gradient(135deg,#ff6600,#cc4400);">23</div>
+                            <div class="link-name">2345导航</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右：码农语录（打字机 + 点击换一句） -->
+            <div class="sidebar-col">
+                <div class="slogan-card" onclick="nextSlogan()" title="点击换一句">
+                    <div class="slogan-head">
+                        <span class="slogan-title"><span class="dot">❝</span> 码农语录</span>
+                        <span class="slogan-count" id="sloganCount"></span>
+                    </div>
+                    <div class="slogan-body" id="sloganText">
+                        <span style="color:var(--text-faint)">正在加载语录...</span>
+                    </div>
+                    <div class="slogan-footer">
+                        <span class="source" id="sloganSource">本地内置</span>
+                        <span class="slogan-actions">
+                            <span class="action" id="sloganLike" onclick="likeSlogan(event)" title="点赞这句">👍 <span id="sloganLikeCount">0</span></span>
+                            <span class="action" id="sloganCopy" onclick="copySlogan(event)" title="复制这句">复制</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:inline="none">
+        // ==================== 搜索引擎切换 ====================
+        var ENGINES = [
+            { name: '百度',   url: 'https://www.baidu.com/s?wd=' },
+            { name: '必应',   url: 'https://www.bing.com/search?q=' },
+            { name: '搜狗',   url: 'https://www.sogou.com/web?query=' },
+            { name: 'Google', url: 'https://www.google.com/search?q=' }
+        ];
+        var engineIdx = 0;
+        var engineBtn = document.getElementById('engineBtn');
+        var searchInput = document.getElementById('searchInput');
+
+        function setEngine(idx) {
+            engineIdx = (idx + ENGINES.length) % ENGINES.length;
+            engineBtn.textContent = ENGINES[engineIdx].name;
+        }
+        function cycleEngine() { setEngine(engineIdx + 1); }
+
+        function doSearch() {
+            var q = searchInput.value.trim();
+            if (!q) { searchInput.focus(); return; }
+            addSearchHistory(q);
+            window.open(ENGINES[engineIdx].url + encodeURIComponent(q), '_blank');
+            hideSearchHistory();
+        }
+
+        // ==================== 搜索历史（localStorage） ====================
+        var HISTORY_KEY = 'mu-search-history';
+        var HISTORY_MAX = 10;
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+            catch (e) { return []; }
+        }
+        function addSearchHistory(q) {
+            var list = getHistory().filter(function (x) { return x !== q; });
+            list.unshift(q);
+            if (list.length > HISTORY_MAX) list = list.slice(0, HISTORY_MAX);
+            try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e) {}
+        }
+        function clearSearchHistory() {
+            try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+            renderHistory();
+        }
+        function renderHistory() {
+            var list = getHistory();
+            var box = document.getElementById('searchHistoryList');
+            if (!list.length) {
+                box.innerHTML = '<div class="h-item" style="justify-content:center;cursor:default;">暂无搜索历史</div>';
+            } else {
+                box.innerHTML = list.map(function (q) {
+                    return '<div class="h-item" onclick="useHistory(\'' + q.replace(/'/g, "\\'") + '\')">' +
+                        q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+                }).join('');
+            }
+            box.closest('.search-history').classList.add('show');
+        }
+        function useHistory(q) {
+            searchInput.value = q;
+            doSearch();
+        }
+        function showHistory() { renderHistory(); }
+        function hideSearchHistory() {
+            var box = document.getElementById('searchHistory');
+            if (box) box.classList.remove('show');
+        }
+        // 聚焦搜索框显示历史，失焦延迟隐藏（便于点击历史项）
+        searchInput.addEventListener('focus', function () { renderHistory(); });
+        searchInput.addEventListener('blur', function () { setTimeout(hideSearchHistory, 200); });
+
+        // Ctrl+K 聚焦，Ctrl+↑/↓ 切引擎
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && (e.key === 'k' || e.key === 'K')) {
+                e.preventDefault(); searchInput.focus();
+            } else if (e.ctrlKey && e.key === 'ArrowUp') {
+                e.preventDefault(); setEngine(engineIdx - 1);
+            } else if (e.ctrlKey && e.key === 'ArrowDown') {
+                e.preventDefault(); setEngine(engineIdx + 1);
+            }
+        });
+
+        // ==================== 时钟 + 分时段问候 ====================
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function updateClock() {
+            var d = new Date();
+            document.getElementById('clockTime').textContent =
+                pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+            var week = ['日','一','二','三','四','五','六'][d.getDay()];
+            document.getElementById('clockDate').textContent =
+                d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 星期' + week;
+        }
+        function updateGreeting() {
+            var h = new Date().getHours();
+            var g, sub;
+            if (h < 5)      { g = '夜深了'; sub = '注意休息，代码明天再写'; }
+            else if (h < 9) { g = '早上好'; sub = '新的一天，从一杯咖啡开始'; }
+            else if (h < 12){ g = '上午好'; sub = '精力充沛，Bug 退散'; }
+            else if (h < 14){ g = '中午好'; sub = '吃饱了才有力气写代码'; }
+            else if (h < 18){ g = '下午好'; sub = '继续搬砖，稳步前进'; }
+            else if (h < 23){ g = '晚上好'; sub = '夜深人静，正是编码好时光'; }
+            else            { g = '夜深了'; sub = '早睡早起，头发常青'; }
+            document.getElementById('greeting').textContent = g;
+            document.getElementById('greetingSub').textContent = sub;
+        }
+
+        // ==================== 主题切换（暗色 / 亮色） ====================
+        var THEME_KEY = 'mu-site-theme';
+        function applyTheme(theme) {
+            var root = document.documentElement;
+            var btn = document.getElementById('themeToggle');
+            if (theme === 'dark') {
+                root.setAttribute('data-theme', 'dark');
+                if (btn) btn.textContent = '☀️ 亮色';
+            } else {
+                root.removeAttribute('data-theme');
+                if (btn) btn.textContent = '🌙 暗色';
+            }
+        }
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            var next = current === 'dark' ? 'light' : 'dark';
+            try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+            applyTheme(next);
+        }
+        function initTheme() {
+            var saved = null;
+            try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+            // 无保存记录时，跟随系统偏好
+            if (!saved) {
+                saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            }
+            applyTheme(saved);
+            // 跟随系统主题变化（仅当用户未手动选择主题时）
+            if (window.matchMedia) {
+                var mq = window.matchMedia('(prefers-color-scheme: dark)');
+                var handler = function (e) {
+                    var hasManual = false;
+                    try { hasManual = !!localStorage.getItem(THEME_KEY); } catch (err) {}
+                    if (!hasManual) applyTheme(e.matches ? 'dark' : 'light');
+                };
+                if (mq.addEventListener) mq.addEventListener('change', handler);
+                else if (mq.addListener) mq.addListener(handler);
+            }
+        }
+
+        // ==================== 码农语录：打字机 + 光标闪烁 ====================
+        var FALLBACK_SLOGANS = [
+            "人生苦短，我用 Python ╰(*°▽°*)╯",
+            "世界上最好的语言是 PHP，不接受反驳 (╯°□°）╯",
+            "我写的代码只有两种：能跑的，和我忘了怎么跑出来的 (¬‿¬)",
+            "调试 5 小时，最后发现少了个分号 (╥﹏╥)",
+            "Ctrl+C 与 Ctrl+V，是每个程序员的基本功 ✌(◕‿◕)✌",
+            "我不生产 Bug，我只是 Bug 的搬运工 (¬‿¬)",
+            "为什么程序员分不清万圣节和圣诞节？因为 Oct 31 == Dec 25 (¬‿¬)",
+            "今天的 Bug 修复率 0%，新增率 200% (¬‿¬)",
+            "程序员的脱发速度与需求变更速度成正比 (╥﹏╥)",
+            "git push --force 一时爽，追悔莫及两行泪 (´;ω;`)",
+            "如果代码能说话，它一定在喊：别删我！ (⊙﹏⊙)",
+            "写代码一时爽，重构火葬场 (´;ω;`)"
+        ];
+        var slogans = FALLBACK_SLOGANS.slice(); // 默认内置 12 条，防断网
+        var sloganIndex = -1;
+        var typingTimer = null;
+        var sloganTextEl = document.getElementById('sloganText');
+        var sloganCountEl = document.getElementById('sloganCount');
+        var sloganSourceEl = document.getElementById('sloganSource');
+
+        // 标记语法：双中括号包裹颜色，如 [color]文字[/color]
+        // 解析为片段数组：[{color:null,text:'...'},{color:'#f00',text:'...'}]
+        function escapeHtml(s) {
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        function parseSlogan(raw) {
+            var segments = [];
+            var re = /\[\[([^\]]+)\]\]([\s\S]*?)\[\[\/\1\]\]/g;
+            var last = 0, m;
+            while ((m = re.exec(raw)) !== null) {
+                if (m.index > last) segments.push({ color: null, text: escapeHtml(raw.slice(last, m.index)) });
+                segments.push({ color: m[1], text: escapeHtml(m[2]) });
+                last = re.lastIndex;
+            }
+            if (last < raw.length) segments.push({ color: null, text: escapeHtml(raw.slice(last)) });
+            if (!segments.length) segments.push({ color: null, text: escapeHtml(raw) });
+            return segments;
+        }
+        // 片段转 HTML
+        function segmentsToHtml(segments) {
+            return segments.map(function (s) {
+                return s.color ? '<span style="color:' + s.color + ';">' + s.text + '</span>' : s.text;
+            }).join('');
+        }
+
+        // 当前正在打印的片段数据
+        var curSegments = [];
+        var curRaw = '';   // 当前原始文本（供复制）
+        var curFlat = '';  // 当前纯文本拼接（不含标签，供逐字计数）
+        var curPos = 0;
+
+        // 打字机：按可见文字逐字推进，标签一次性渲染（不闪现乱码）
+        function renderProgress() {
+            var out = '';
+            var remaining = curPos;
+            for (var i = 0; i < curSegments.length && remaining > 0; i++) {
+                var seg = curSegments[i];
+                if (remaining >= seg.text.length) {
+                    out += seg.color ? '<span style="color:' + seg.color + ';">' + seg.text + '</span>' : seg.text;
+                    remaining -= seg.text.length;
+                } else {
+                    var partial = seg.text.slice(0, remaining);
+                    out += seg.color ? '<span style="color:' + seg.color + ';">' + partial + '</span>' : partial;
+                    remaining = 0;
+                }
+            }
+            var cursorSpan = document.createElement('span');
+            cursorSpan.className = 'cursor';
+            sloganTextEl.innerHTML = out;
+            sloganTextEl.appendChild(cursorSpan);
+        }
+
+        function typeSlogan(idx) {
+            if (typingTimer) { clearInterval(typingTimer); typingTimer = null; }
+            sloganIndex = idx;
+            curRaw = slogans[idx];
+            curSegments = parseSlogan(curRaw);
+            // 纯文本总长 = 各片段文字长度之和
+            curFlat = curSegments.map(function (s) { return s.text; }).join('');
+            curPos = 0;
+            renderProgress();
+            renderLikeState();
+            sloganCountEl.textContent = (idx + 1) + ' / ' + slogans.length;
+            typingTimer = setInterval(function () {
+                curPos++;
+                if (curPos >= curFlat.length) {
+                    clearInterval(typingTimer);
+                    typingTimer = null;
+                    curPos = curFlat.length;
+                }
+                renderProgress();
+            }, 38);
+        }
+
+        function nextSlogan() {
+            if (!slogans.length) return;
+            // 正在打字时，直接跳到下一条（避免逐句打断）
+            var next = (sloganIndex + 1) % slogans.length;
+            typeSlogan(next);
+        }
+
+        function copySlogan(e) {
+            if (e) e.stopPropagation();
+            if (!curRaw) return;
+            var text = curRaw.replace(/\[\[[^\]]+\]\]/g, '').replace(/\[\[\/[^\]]+\]\]/g, '');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () { flashCopied(); });
+            } else {
+                // 降级：旧式 execCommand
+                var ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); flashCopied(); } catch (err) {}
+                document.body.removeChild(ta);
+            }
+        }
+        function flashCopied() {
+            var btn = document.getElementById('sloganCopy');
+            if (!btn) return;
+            btn.textContent = '已复制';
+            btn.classList.add('copied');
+            setTimeout(function () { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1200);
+        }
+
+        // ==================== 语录点赞（localStorage 记忆） ====================
+        var LIKE_KEY = 'mu-slogan-likes';
+        var likedSet = {};
+        try { likedSet = JSON.parse(localStorage.getItem(LIKE_KEY)) || {}; } catch (e) {}
+
+        function likeSlogan(e) {
+            if (e) e.stopPropagation();
+            if (!curRaw) return;
+            var key = curRaw.slice(0, 40); // 用语句前40字作为标识
+            likedSet[key] = likedSet[key] ? 0 : 1;
+            try { localStorage.setItem(LIKE_KEY, JSON.stringify(likedSet)); } catch (err) {}
+            renderLikeState();
+        }
+        function renderLikeState() {
+            if (!curRaw) return;
+            var key = curRaw.slice(0, 40);
+            var liked = !!likedSet[key];
+            var btn = document.getElementById('sloganLike');
+            if (btn) {
+                btn.classList.toggle('liked', liked);
+                var cnt = document.getElementById('sloganLikeCount');
+                if (cnt) cnt.textContent = liked ? '1' : '0';
+            }
+        }
+
+        function loadSlogans() {
+            // 尝试从后端加载更多语录；失败则沿用内置 12 条
+            fetch('/slogan/list')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var arr = (data && data.data) || [];
+                    if (arr.length) {
+                        slogans = arr;
+                        sloganSourceEl.textContent = '本地内置 ' + arr.length + ' 条';
+                    }
+                    typeSlogan(0);
+                })
+                .catch(function () {
+                    sloganSourceEl.textContent = '离线内置';
+                    typeSlogan(0);
+                });
+        }
+
+        function doLogout() {
+            postJSON('/auth/logout', {}, function (res) {
+                redirectLater(res.redirect || '/auth/login', 300);
+            });
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            initTheme();
+            updateClock();
+            updateGreeting();
+            setInterval(updateClock, 1000);
+            setInterval(updateGreeting, 60000);
+            loadSlogans();
+        }
+        // 尽早应用主题，避免暗色主题下页面闪烁（脚本在 body 末尾，立即执行）
+        initTheme();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else { init(); }
+    </script>
+</body>
+</html>

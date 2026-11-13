@@ -1,0 +1,81 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    session:
+      cookie:
+        http-only: true
+        # 生产环境必须为 true（HTTPS 下才发送 Cookie）；本地 HTTP 开发需设为 false，否则浏览器不保存会话
+        secure: false
+        # 同站限制：防 CSRF 的纵深防御。Strict 最严但会影响部分跨站跳转，Lax 为推荐平衡值
+        same-site: lax
+
+# 日志文件输出目录（logback-spring.xml 读取，用于实时监测）
+logging:
+  file:
+    path: logs
+
+
+spring:
+  datasource:
+    # 本机开发：useSSL=false + allowPublicKeyRetrieval=true 仅为本地免证书调试。
+    # 生产环境必须改为 useSSL=true 并移除 allowPublicKeyRetrieval，启用 TLS 加密传输，防中间人窃听。
+    url: jdbc:mysql://localhost:3306/secure_website?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    # 数据库密码必须通过环境变量 DB_PASSWORD 注入，不提供默认值，避免弱口令泄漏
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      # 生产使用 validate：只校验表结构与实体一致，不自动改表结构，避免意外破坏数据。
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: false
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+
+# 安全配置
+security:
+  # 注册间隔限制（秒）：同一IP在此时间内只能注册一次
+  register-interval-seconds: 300
+  # 同一IP最大注册次数（超过则拉黑）
+  max-register-count-per-ip: 3
+  # IP 拉黑时长（分钟）
+  blacklist-duration-minutes: 60
+  # DDoS 防护：每个IP每秒最大请求数
+  ddos-max-requests-per-second: 10
+  # DDoS 防护：触发限流后封禁时长（秒）
+  ddos-ban-duration-seconds: 30
+  # 是否信任代理转发头（X-Forwarded-For 等）。
+  # 仅在部署于可信反向代理（Nginx）后设为 true；否则保持 false，防止伪造 IP 绕过风控。
+  trust-proxy-headers: false
+  # 登录失败锁定：连续失败多少次后锁定
+  login-max-fail-count: 5
+  # 登录失败锁定：首次锁定时长（秒）。第1次锁定30秒，之后每次翻倍（1分钟/2分钟/4分钟/8分钟...）
+  login-first-lock-seconds: 30
+  # 登录失败锁定：锁定档位倍增基数（2 表示每次翻倍）
+  login-lock-multiplier: 2
+  # IP 白名单（白名单内 IP 不受 DDoS 限流和注册风控限制）
+  # ⚠️ 安全警告：此处只能配置「绝对可信」的地址（如本机回环、内部管理网段）。
+  # 严禁配置公网 IP、0.0.0.0、0:0:0:0:0:0:0:0 或 "*"，否则注册风控与 DDoS 限流将对全网失效。
+  ip-whitelist:
+    - 127.0.0.1          # 本机回环
+    - 0:0:0:0:0:0:0:1    # IPv6 本地
+
+# 管理员账号配置
+# 启动时 AdminInitializer 会确保该账号存在且为 ADMIN 角色。
+# 首次创建管理员时，密码需通过环境变量 ADMIN_PASSWORD 注入（不提供默认值，防弱口令）。
+admin:
+  username: admin
+  # password 不在此处配置，仅从环境变量 ADMIN_PASSWORD 读取（见 AdminInitializer）
+

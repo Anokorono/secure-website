@@ -1,0 +1,106 @@
+/* ========== 全局重置 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+a { text-decoration: none; color: inherit; }
+ul, li { list-style: none; }
+
+/* ========== 精灵图（CSS 渐变模拟 sprite） ==========
+ * 通过 background-position 切换不同图标，体现精灵技术
+ */
+.sprite {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background-image:
+        linear-gradient(135deg, #4facfe 0%, #00f2fe 100%),
+        linear-gradient(135deg, #fa709a 0%, #fee140 100%),
+        linear-gradient(135deg, #30cfd0 0%, #330867 100%),
+        linear-gradient(135deg, #a8edea 0%, #fed6e3 100%),
+        linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%),
+        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-repeat: no-repeat;
+    background-size: 600% 100%;
+    border-radius: 8px;
+}
+.sprite-user   { background-position: 0% 0; }
+.sprite-lock   { background-position: 20% 0; }
+.sprite-home   { background-position: 40% 0; }
+.sprite-game   { background-position: 60% 0; }
+.sprite-link   { background-position: 80% 0; }
+.sprite-logout { background-position: 100% 0; }
+
+/* 小尺寸精灵 */
+.sprite-sm { width: 20px; height: 20px; border-radius: 5px; }
+
+/* ========== 通用按钮 ========== */
+.btn {
+    display: inline-block;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all .25s;
+    color: #fff;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(118,75,162,.4); }
+.btn-success { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(56,249,215,.4); }
+.btn-danger  { background: linear-gradient(135deg, #fa709a, #fee140); }
+.btn-ghost   { background: #f0f2f5; color: #555; }
+.btn-ghost:hover { background: #e4e7eb; }
+
+/* ========== 表单 ========== */
+.form-card {
+    background: rgba(255,255,255,.92);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.12);
+    padding: 36px 40px;
+}
+.form-item { margin-bottom: 18px; }
+.form-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 600;
+}
+.form-item input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color .2s;
+}
+.form-item input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,.15);
+}
+
+/* ========== 提示框 ========== */
+.alert {
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+}
+.alert-error { background: #fef0f0; color: #f56c6c; border: 1px solid #fbc4c4; }
+.alert-success { background: #f0f9eb; color: #67c23a; border: 1px solid #c2e7b0; }
+.alert-warn { background: #fdf6ec; color: #e6a23c; border: 1px solid #f5dab1; }
+
+/* ========== 背景动画 ========== */
+.bg-animate {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+@keyframes gradientBG {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
