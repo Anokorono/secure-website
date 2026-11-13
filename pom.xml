@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>secure-website</artifactId>
-    <version>1.0.0</version>
+    <version>0.1.0</version>
     <name>secure-website</name>
     <description>带安全防护的登录注册网站</description>
 

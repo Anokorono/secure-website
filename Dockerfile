@@ -22,7 +22,7 @@ WORKDIR /app
 RUN groupadd -r app && useradd -r -g app app
 
 # 复制打包产物
-COPY --from=builder /app/target/secure-website-1.0.0.jar app.jar
+COPY --from=builder /app/target/secure-website-0.1.0.jar app.jar
 
 USER app
 EXPOSE 8080

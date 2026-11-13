@@ -157,7 +157,7 @@ mvn spring-boot:run
 
 # 方式二：打包后运行（生产推荐）
 mvn clean package -DskipTests
-java -jar target/secure-website-1.0.0.jar
+java -jar target/secure-website-0.1.0.jar
 
 # 方式三：启动脚本
 ./start.sh init      # 初始化数据库

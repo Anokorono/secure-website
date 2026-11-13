@@ -13,7 +13,7 @@ case "$ACTION" in
     package)
         echo ">>> 打包项目..."
         mvn clean package -DskipTests
-        echo ">>> 打包完成，jar 位于 target/secure-website-1.0.0.jar"
+        echo ">>> 打包完成，jar 位于 target/secure-website-0.1.0.jar"
         ;;
     run)
         echo ">>> 启动项目..."
